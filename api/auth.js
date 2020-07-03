@@ -37,7 +37,7 @@ router.post('/login',
           _id : user._id,
           username: user.username
         };
-        var secretOrPrivateKey = process.env.JWT_SECRET;
+        var secretOrPrivateKey = "c3jwtsecret";
         var options = {expiresIn: 60*60*24};
         jwt.sign(payload, secretOrPrivateKey, options, function(err, token){
           if(err) return res.json(util.successFalse(err));
@@ -71,7 +71,7 @@ router.get('/refresh', util.isLoggedin,
           _id : user._id,
           username: user.username
         };
-        var secretOrPrivateKey = process.env.JWT_SECRET;
+        var secretOrPrivateKey = "c3jwtsecret";
         var options = {expiresIn: 60*60*24};
         jwt.sign(payload, secretOrPrivateKey, options, function(err, token){
           if(err) return res.json(util.successFalse(err));

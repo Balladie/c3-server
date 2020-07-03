@@ -76,7 +76,7 @@ router.post('/registervideo/:username', util.isLoggedin, function(req, res, next
         user.availableRegisterCount -= 1;
         user.save((err) => {
             if (err)
-                return res.json(util.successFalse(err));
+                console.log(err);
         });
 
         console.log("*********************");
@@ -125,6 +125,75 @@ router.get('/thumbnail/:username/:registeredAt', util.isLoggedin, function(req, 
 
         var thumbnailPath = path.join(__dirname.substring(0, __dirname.lastIndexOf("/api")), "images/thumbnails/" + req.params.username + "_" + req.params.registeredAt + ".jpeg");
         return res.sendFile(thumbnailPath);
+    });
+});
+
+// report url manually
+router.post('/report', util.isLoggedin, function(req, res, next) {
+    console.log("Report request from: " + req.body.username);
+    console.log("Reported URL: " + req.body.url);
+    console.log("Reported original video: " + req.body.registeredAt);
+
+    var username = req.body.username;
+    var url = req.body.url;
+    var registeredAt = req.body.registeredAt;
+
+    var result = {
+        username: username,
+        url: url,
+        registeredAt: registeredAt
+    };
+
+    const spawn = require('child_process').spawn;
+    const python = spawn('python', ["../c3-engine/run.py", "--username", username, "--url", url, "--registeredAt", registeredAt]);
+
+    python.stdout.on('data', (data) => {
+        console.log(data.toString());
+    });
+    python.stderr.on('data', (data) => {
+        console.log(data.toString());
+    });
+    python.on('close', (code) => {
+        console.log("code:", code);
+    });
+
+    return res.json(util.successTrue(result));
+});
+
+// mark report as reported
+router.get('/report/:username/:registeredAt', util.isLoggedin, function(req, res, next) {
+    console.log("Marking report...");
+    console.log("username: " + req.params.username + ", registeredAt: " + req.params.registeredAt);
+
+    var username = req.params.username;
+    var registeredAt = req.params.registeredAt;
+
+    User.findOne({username:req.params.username})
+    .select({reportList:1})
+    .exec(function(err, user) {
+        if (err || !user) return res.json(util.successFalse(err));
+
+        for (var i = 0; i < user.reportList.length; ++i) {
+            if (user.reportList[i].registeredAt == registeredAt && !user.reportList[i].reported) {
+                var newReport = {
+                    url: user.reportList[i].url,
+                    registeredAt: user.reportList[i].registeredAt,
+                    reported: true
+                };
+
+                user.reportList.splice(i, 1);
+                user.reportList.push(newReport);
+                //user.reportList[i].reported = true;
+                break;
+            }
+        }
+
+        user.save(function(err) {
+            if (err) return res.json(util.successFalse(err));
+            else {
+                res.json(util.successTrue(user));
+            }
+        });
     });
 });
 
