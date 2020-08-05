@@ -7,6 +7,7 @@ var jwt      = require('jsonwebtoken');
 // login
 router.post('/login',
   function(req,res,next){
+    console.log('Login request from: ' + req.body.username);
     var isValid = true;
     var validationError = {
       name:'ValidationError',
@@ -41,7 +42,7 @@ router.post('/login',
         var options = {expiresIn: 60*60*24};
         jwt.sign(payload, secretOrPrivateKey, options, function(err, token){
           if(err) return res.json(util.successFalse(err));
-          console.log("Login on username: " + payload.username);
+          console.log("Login successful on username: " + payload.username);
           res.json(util.successTrue(token));
         });
       }
