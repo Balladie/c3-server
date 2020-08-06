@@ -37,8 +37,8 @@ router.post('/', function(req,res,next){
 });
 
 // show
-router.get('/:username', util.isLoggedin, function(req,res,next){
-  User.findOne({username:req.params.username})
+router.get('/:email', util.isLoggedin, function(req,res,next){
+  User.findOne({email:req.params.email})
   .exec(function(err,user){
     res.json(err||!user? util.successFalse(err): util.successTrue(user));
   });
@@ -234,7 +234,7 @@ module.exports = router;
 
 // private functions
 function checkPermission(req,res,next){
-  User.findOne({username:req.params.username}, function(err,user){
+  User.findOne({email:req.params.email}, function(err,user){
     if(err||!user) return res.json(util.successFalse(err));
     else if(!req.decoded || user._id != req.decoded._id)
       return res.json(util.successFalse(null,'You don\'t have permission'));

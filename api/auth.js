@@ -7,16 +7,16 @@ var jwt      = require('jsonwebtoken');
 // login
 router.post('/login',
   function(req,res,next){
-    console.log('Login request from: ' + req.body.username);
+    console.log('Login request from: ' + req.body.email);
     var isValid = true;
     var validationError = {
       name:'ValidationError',
       errors:{}
     };
 
-    if(!req.body.username){
+    if(!req.body.email){
       isValid = false;
-      validationError.errors.username = {message:'Username is required!'};
+      validationError.errors.email = {message:'Email is required!'};
     }
     if(!req.body.password){
       isValid = false;
@@ -27,7 +27,7 @@ router.post('/login',
     else next();
   },
   function(req,res,next){
-    User.findOne({username:req.body.username})
+    User.findOne({email:req.body.email})
     .select({password:1,username:1,name:1,email:1})
     .exec(function(err,user){
       if(err) return res.json(util.successFalse(err));
@@ -36,13 +36,13 @@ router.post('/login',
       else {
         var payload = {
           _id : user._id,
-          username: user.username
+          username: user.email
         };
         var secretOrPrivateKey = "c3jwtsecret";
         var options = {expiresIn: 60*60*24};
         jwt.sign(payload, secretOrPrivateKey, options, function(err, token){
           if(err) return res.json(util.successFalse(err));
-          console.log("Login successful on username: " + payload.username);
+          console.log("Login successful on email: " + user.email);
           res.json(util.successTrue(token));
         });
       }
