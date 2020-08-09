@@ -8,6 +8,7 @@ var path = require('path');
 var mv = require('mv');
 var fs = require('fs');
 var child_process = require('child_process');
+var mysql = require('mysql');
 
 var storage = multer.diskStorage({
     destination: function(req, file, cb) {
@@ -68,10 +69,6 @@ router.post('/registervideo/:username', util.isLoggedin, function(req, res, next
             resolution: req.body.resolution
         };
 
-        console.log("*********************");
-        console.log(user.videoList);
-        console.log("*********************");
-
         user.videoList.push(newVideo);
         user.availableRegisterCount -= 1;
         user.save((err) => {
@@ -79,7 +76,21 @@ router.post('/registervideo/:username', util.isLoggedin, function(req, res, next
                 console.log(err);
         });
 
+        // send video info to web server
+        var connection = mysql.createConnection({
+            host: '175.125.94.153',
+            user: 'kopca',
+            password: 'kopca7748?',
+            database: 'kopcadb'
+        });
+        connection.connect();
+        connection.query(`INSERT INTO cr (cr_name, cr_username, cr_url, cr_title, cr_registeredAt, cr_size, cr_duration, cr_resolution) VALUE('${user.name}', '${user.username}', '${newVideo.platforms[0]}', '${newVideo.title}', '${newVideo.registeredAt}', '${newVideo.size}', '${newVideo.duration}', '${newVideo.resolution}');`, function(error, results, fields) {
+            if (error) console.log(error);
+            console.log('Saved to DB successfully');
+        });
+
         console.log("*********************");
+        console.log('Register video: Done.');
         console.log(user.videoList);
         console.log("*********************");
 
@@ -114,7 +125,7 @@ router.post('/image/:username/:registeredAt', util.isLoggedin, upload.single('fi
 });
 
 // get thumbnail
-router.get('/thumbnail/:username/:registeredAt', util.isLoggedin, function(req, res, next) {
+router.get('/thumbnail/:username/:registeredAt', function(req, res, next) {
     console.log("image request from: " + req.params.username);
     console.log("registeredAt: " + req.params.registeredAt);
 
